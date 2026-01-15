@@ -47,7 +47,6 @@ const fs = require('fs');
 
     // Извлекаем __NEXT_DATA__ из HTML
     const nextDataMatch = html.match(/<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/s);
-    console.log('NEXT DATA MATCH 0:', nextDataMatch[0]);
     if (!nextDataMatch || !nextDataMatch[1]) {
         console.error('Не найден тег __NEXT_DATA__ в ответе.');
         await browser.close();
@@ -79,7 +78,7 @@ const fs = require('fs');
         "Рейтинг": p.rating || '-',
         "Количество отзывов": p.reviews || 0,
         "Цена": p.price || 0,
-        "Акционная цена": p.price || '-',
+        "Акционная цена": p.oldPrice > 0? p.price : '-',
         "Цена до акции": p.oldPrice > 0 ? p.oldPrice : '-',
         "Размер скидки": p.discount > 0 ? p.discount : '-',
     }));
