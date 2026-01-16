@@ -8,12 +8,22 @@
     "start": "node ui-parser.js",
     "parse": "node ui-parser.js",
     "api": "node api-parser.js",
-    "clean:mac": "sh -c \"chflags -R nouchg node_modules 2>/dev/null || true; chmod -R u+rw node_modules 2>/dev/null || true; rm -rf node_modules\""
+    "clean:mac": "sh -c \"chflags -R nouchg node_modules 2>/dev/null || true; chmod -R u+rw node_modules 2>/dev/null || true; rm -rf node_modules\"",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "axios": "^1.13.2",
     "puppeteer": "^24.35.0",
     "puppeteer-real-browser": "^1.4.4"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.2",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "prettier": "^3.3.3"
   },
   "private": true
 }

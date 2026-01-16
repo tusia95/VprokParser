@@ -128,3 +128,27 @@
 В `package.json` настроены команды:
 - `npm run parse -- <product_url> "<region>"` — UI‑парсер
 - `npm run api -- <category_url>` — API‑парсер
+
+
+## Статический анализ кода: ESLint и Prettier
+В проект добавлены линтер (ESLint) и форматтер (Prettier) с интеграцией друг с другом.
+
+### Установка (dev-зависимости)
+Если уже установлены обычные зависимости, добавьте dev-зависимости:
+- npm: `npm install --save-dev eslint eslint-config-prettier eslint-plugin-prettier prettier`
+- или yarn: `yarn add -D eslint eslint-config-prettier eslint-plugin-prettier prettier`
+
+### Конфигурация
+- `.eslintrc.json` — базовые правила для Node/CommonJS, включены `eslint:recommended` и интеграция с Prettier.
+- `.eslintignore` — исключает node_modules и артефакты (изображения, lock-файлы, экспортируемые txt).
+- `.prettierrc` — стилистика кода (одинарные кавычки, trailing commas, ширина строки 100 и т.д.).
+- `.prettierignore` — те же исключения, что и у ESLint.
+
+### Скрипты npm
+В `package.json` добавлены команды:
+- `npm run lint` — запустить ESLint на всём проекте
+- `npm run lint:fix` — ESLint с автоматическим исправлением
+- `npm run format` — применить Prettier ко всем файлам
+- `npm run format:check` — проверить форматирование без изменений
+
+Совет: сначала запускайте `lint:fix`, затем `format`.

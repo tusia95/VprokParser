@@ -20,63 +20,64 @@ const uiParser = require('puppeteer');
 const OUTPUT_SCREENSHOT = path.resolve(process.cwd(), 'screenshot.jpg');
 const OUTPUT_TEXT = path.resolve(process.cwd(), 'product.txt');
 
+const selectorsForParsing = {
+  price: "[class*=ProductPage_buyBlockDesktop] [class*='Price_role_discount']",
+  old_price: "[class*=ProductPage_buyBlockDesktop] [class*='Price_role_old']",
+  rating: "[class*='ActionsRow_stars']",
+  reviews_count: "[class*='ActionsRow_reviews_']",
+};
 
-const selectorsForParsing= {
-    price: "[class*=ProductPage_buyBlockDesktop] [class*='Price_role_discount']",
-    "old_price":"[class*=ProductPage_buyBlockDesktop] [class*='Price_role_old']",
-    rating: "[class*='ActionsRow_stars']",
-    "reviews_count":"[class*='ActionsRow_reviews_']",
-    region: "[class*='Region_text']",
-    regionInRegionList: "[class*='UiRegionListBase_button']",
-}
-
-
-function log(...args) { try { console.log(...args); } catch {} }
+const uiInteractionSelectors = {
+  region: "[class*='Region_text']",
+  regionInRegionList: "[class*='UiRegionListBase_button']",
+};
 
 function textNormalize(text) {
-    return (text || '')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .toLowerCase();
+  return (text || '').replace(/\s+/g, ' ').trim().toLowerCase();
 }
 
 async function clickByText(page, selectors, text) {
-    const target = textNormalize(text);
-    for (const sel of selectors) {
-        const found = await page.$$(sel).catch(() => []);
-        for (const el of found) {
-            const t = textNormalize(await page.evaluate(e => e.innerText || e.textContent || '', el));
-            if (t === target) {
-                await el.click();
-                return true;
-            }
-        }
+  const target = textNormalize(text);
+  for (const sel of selectors) {
+    const found = await page.$$(sel).catch(() => []);
+    for (const el of found) {
+      const t = textNormalize(await page.evaluate((e) => e.innerText || e.textContent || '', el));
+      if (t === target) {
+        await el.click();
+        return true;
+      }
     }
-    return false;
+  }
+  return false;
 }
 async function setRegion(page, regionName) {
-    let currentRegionName = '';
+  let currentRegionName = '';
   try {
-      const currentRegion = await page.$(selectorsForParsing.region);
-      currentRegionName = await currentRegion.evaluate(el =>el.textContent || '');
+    const currentRegion = await page.$(uiInteractionSelectors.region);
+    currentRegionName = await currentRegion.evaluate((el) => el.textContent || '');
 
     if (currentRegion && textNormalize(currentRegionName) === textNormalize(regionName)) {
       return;
     }
-    await page.waitForSelector(selectorsForParsing.region, { timeout: 5000 })
+    await page.waitForSelector(uiInteractionSelectors.region, { timeout: 5000 });
     await currentRegion.click();
-    await page.waitForSelector(selectorsForParsing.regionInRegionList, { timeout: 5000 });
+    await page.waitForSelector(uiInteractionSelectors.regionInRegionList, { timeout: 5000 });
 
-    const clicked = await clickByText(page, [selectorsForParsing.regionInRegionList], regionName);
+    const clicked = await clickByText(
+      page,
+      [uiInteractionSelectors.regionInRegionList],
+      regionName,
+    );
     if (!clicked) {
       throw new Error(`Region "${regionName}" not found`);
     }
-
   } catch (e) {
-    console.error(`!!!!Set default region "${currentRegionName}!!!!". Region selection skipped due to error:`, e.message);
+    console.error(
+      `!!!!Set default region "${currentRegionName}!!!!". Region selection skipped due to error:`,
+      e.message,
+    );
   }
 }
-
 
 async function extractData(page) {
   const sels = selectorsForParsing;
@@ -85,14 +86,14 @@ async function extractData(page) {
     try {
       const el = await page.$(sel);
       if (!el) return null;
-      const prop = await el.evaluate(el =>el.textContent || '');
-     return prop.trim();
+      const prop = await el.evaluate((el) => el.textContent || '');
+      return prop.trim();
     } catch {
       return null;
     }
   };
 
-  const cleanNum = (s) => (s ? ((s.match(/[\d.,]+/g) || []).join('') || s) : null);
+  const cleanNum = (s) => (s ? (s.match(/[\d.,]+/g) || []).join('') || s : null);
 
   const [priceText, oldPriceText, ratingText, reviewsText] = await Promise.all([
     getText(sels.price),
@@ -101,10 +102,9 @@ async function extractData(page) {
     getText(sels.reviews_count),
   ]);
 
-
   return {
-    price: cleanNum(priceText)|| `не определена (вероятно товара нет в наличии в регионе)`,
-    oldPrice: cleanNum(oldPriceText) || "не определена (вероятно товара нет в наличии в регионе)",
+    price: cleanNum(priceText) || `не определена (вероятно товара нет в наличии в регионе)`,
+    oldPrice: cleanNum(oldPriceText) || 'не определена (вероятно товара нет в наличии в регионе)',
     rating: cleanNum(ratingText),
     reviewsCount: cleanNum(reviewsText),
   };
@@ -120,11 +120,7 @@ async function extractData(page) {
   const browser = await uiParser.launch({
     headless: false,
     defaultViewport: { width: 1366, height: 900 },
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--lang=ru-RU,ru',
-    ],
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--lang=ru-RU,ru'],
   });
 
   try {
@@ -132,16 +128,17 @@ async function extractData(page) {
 
     console.log('Opening URL:', url);
     await page.goto(url, { waitUntil: 'load' });
-      const response = await page.waitForResponse(
-          response =>
-              response.url().includes('/regionList')
-              && response.status() === 200,
-          { timeout: 15000 }
-      );
+    const response = await page.waitForResponse(
+      (response) => response.url().includes('/regionList') && response.status() === 200,
+      { timeout: 15000 },
+    );
 
     console.log('Setting region to:', region);
     await setRegion(page, region);
-
+    await page.waitForResponse(
+      (response) => response.url().includes('/regionList') && response.status() === 200,
+      { timeout: 15000 },
+    );
     console.log('Taking screenshot to', OUTPUT_SCREENSHOT);
     await page.screenshot({ path: OUTPUT_SCREENSHOT, fullPage: true, type: 'jpeg', quality: 85 });
 
