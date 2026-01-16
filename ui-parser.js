@@ -16,13 +16,15 @@ This script:
 const fs = require('fs');
 const path = require('path');
 const uiParser = require('puppeteer');
+const { get } = require('axios');
 
 const OUTPUT_SCREENSHOT = path.resolve(process.cwd(), 'screenshot.jpg');
 const OUTPUT_TEXT = path.resolve(process.cwd(), 'product.txt');
 
 const selectorsForParsing = {
-  price: "[class*=ProductPage_buyBlockDesktop] [class*='Price_role_discount']",
+  discount_price: "[class*=ProductPage_buyBlockDesktop] [class*='Price_role_discount']",
   old_price: "[class*=ProductPage_buyBlockDesktop] [class*='Price_role_old']",
+  regular_price: "[class*='ProductPage_buyBlockDesktop'] [class*='Price_role_regular']",
   rating: "[class*='ActionsRow_stars']",
   reviews_count: "[class*='ActionsRow_reviews_']",
 };
@@ -85,7 +87,6 @@ async function extractData(page) {
     if (!sel) return null;
     try {
       const el = await page.$(sel);
-      if (!el) return null;
       const prop = await el.evaluate((el) => el.textContent || '');
       return prop.trim();
     } catch {
@@ -95,16 +96,16 @@ async function extractData(page) {
 
   const cleanNum = (s) => (s ? (s.match(/[\d.,]+/g) || []).join('') || s : null);
 
-  const [priceText, oldPriceText, ratingText, reviewsText] = await Promise.all([
-    getText(sels.price),
+  const [priceText, discountPrice, oldPriceText, ratingText, reviewsText] = await Promise.all([
+    getText(sels.regular_price),
+    getText(sels.discount_price),
     getText(sels.old_price),
     getText(sels.rating),
     getText(sels.reviews_count),
   ]);
-
   return {
-    price: cleanNum(priceText) || `не определена (вероятно товара нет в наличии в регионе)`,
-    oldPrice: cleanNum(oldPriceText) || 'не определена (вероятно товара нет в наличии в регионе)',
+    price: cleanNum(priceText || discountPrice),
+    oldPrice: cleanNum(oldPriceText) || '"-"',
     rating: cleanNum(ratingText),
     reviewsCount: cleanNum(reviewsText),
   };
