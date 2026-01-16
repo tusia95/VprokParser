@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node ui-parser.js",
     "parse": "node ui-parser.js",
-    "api": "node api-parser.js"
+    "api": "node api-parser.js",
+    "clean:mac": "sh -c \"chflags -R nouchg node_modules 2>/dev/null || true; chmod -R u+rw node_modules 2>/dev/null || true; rm -rf node_modules\""
   },
   "dependencies": {
     "axios": "^1.13.2",
