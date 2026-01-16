@@ -1,0 +1,9 @@
+node_modules/
+.yarn/
+.yarnrc.yml
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+screenshot.jpg
+product.txt
+products_api.txt
