@@ -75,7 +75,7 @@ async function setRegion(page, regionName) {
     }
     await page.waitForResponse(
       (response) => response.url().includes('/regionList') && response.status() === 200,
-      { timeout: 15000 },
+      { timeout: 7000 },
     );
   } catch (e) {
     console.error(
@@ -108,7 +108,7 @@ async function extractData(page) {
     getText(sels.reviews_count),
   ]);
   return {
-    price: cleanNum(priceText || discountPrice),
+    price: cleanNum(priceText || discountPrice) || 'не определена. Товар вероятно распродан',
     oldPrice: cleanNum(oldPriceText) || '"-"',
     rating: cleanNum(ratingText),
     reviewsCount: cleanNum(reviewsText),
@@ -137,6 +137,11 @@ async function extractData(page) {
       (response) => response.url().includes('/regionList') && response.status() === 200,
       { timeout: 15000 },
     );
+    await page
+      .waitForSelector('[class*=ProductPage_buyBlockDesktop]', { timeout: 5000 })
+      .catch(() => {
+        throw new Error('Product not found');
+      });
 
     console.log('Setting region to:', region);
     await setRegion(page, region);
