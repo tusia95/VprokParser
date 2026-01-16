@@ -73,6 +73,10 @@ async function setRegion(page, regionName) {
     if (!clicked) {
       throw new Error(`Region "${regionName}" not found`);
     }
+    await page.waitForResponse(
+      (response) => response.url().includes('/regionList') && response.status() === 200,
+      { timeout: 15000 },
+    );
   } catch (e) {
     console.error(
       `!!!!Set default region "${currentRegionName}!!!!". Region selection skipped due to error:`,
@@ -136,10 +140,7 @@ async function extractData(page) {
 
     console.log('Setting region to:', region);
     await setRegion(page, region);
-    await page.waitForResponse(
-      (response) => response.url().includes('/regionList') && response.status() === 200,
-      { timeout: 15000 },
-    );
+
     console.log('Taking screenshot to', OUTPUT_SCREENSHOT);
     await page.screenshot({ path: OUTPUT_SCREENSHOT, fullPage: true, type: 'jpeg', quality: 85 });
 
