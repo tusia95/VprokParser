@@ -98,7 +98,7 @@ async function extractData(page) {
     }
   };
 
-  const cleanNum = (s) => (s ? (s.match(/[\d.,]+/g) || []).join('') || s : null);
+  // const cleanNum = (s) => (s ? (s.match(/[\d.,]+/g) || []).join('') || s : null);
 
   const [priceText, discountPrice, oldPriceText, ratingText, reviewsText] = await Promise.all([
     getText(sels.regular_price),
@@ -108,10 +108,10 @@ async function extractData(page) {
     getText(sels.reviews_count),
   ]);
   return {
-    price: cleanNum(priceText || discountPrice) || 'не определена. Товар вероятно распродан',
-    oldPrice: cleanNum(oldPriceText) || '"-"',
-    rating: cleanNum(ratingText),
-    reviewsCount: cleanNum(reviewsText),
+    price: priceText || discountPrice || 'не определена. Товар вероятно распродан',
+    oldPrice: oldPriceText || '"-"',
+    rating: ratingText,
+    reviewsCount: reviewsText,
   };
 }
 (async () => {
@@ -133,7 +133,7 @@ async function extractData(page) {
 
     console.log('Opening URL:', url);
     await page.goto(url, { waitUntil: 'load' });
-    const response = await page.waitForResponse(
+    await page.waitForResponse(
       (response) => response.url().includes('/regionList') && response.status() === 200,
       { timeout: 15000 },
     );

@@ -15,6 +15,8 @@
 const url = process.argv[2];
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const { resolve } = require('node:path');
+const path = require('node:path');
 
 (async () => {
   const browser = await puppeteer.launch({
@@ -43,22 +45,12 @@ const fs = require('fs');
   const html = await response.text();
 
   // Извлекаем __NEXT_DATA__ из HTML
-  const nextDataMatch = html.match(
-    /<script id="__NEXT_DATA__" type="application\/json">(.*?)<\/script>/s,
-  );
-  if (!nextDataMatch || !nextDataMatch[1]) {
-    console.error('Не найден тег __NEXT_DATA__ в ответе.');
-    await browser.close();
-    return;
-  }
-
+  const scriptContent = await page.$eval('#__NEXT_DATA__', (el) => el.textContent);
   let data;
   try {
-    data = JSON.parse(nextDataMatch[1]);
+    data = JSON.parse(scriptContent);
   } catch (e) {
     console.error('Ошибка парсинга __NEXT_DATA__:', e);
-    await browser.close();
-    return;
   }
 
   // Путь к массиву товаров
@@ -83,9 +75,8 @@ const fs = require('fs');
   }));
 
   console.log(`Найдено товаров: ${extracted.length}`);
-
-  // Сохраняем в файл
-  fs.writeFileSync('products_api.txt', JSON.stringify(extracted, null, 2));
+  const outA = path.resolve(process.cwd(), 'products_api.txt');
+  fs.writeFileSync(outA, JSON.stringify(extracted, null, 2));
   console.log('Данные сохранены');
 
   await browser.close();
